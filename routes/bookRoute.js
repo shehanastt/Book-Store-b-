@@ -1,0 +1,28 @@
+import express from 'express';
+import { addBook, deleteBook, editBook, getBook, listBooks } from '../controllers/bookController.js';
+import userAuthCheck from '../middlewares/authCheck.js';
+import { check } from 'express-validator';
+
+const router = express.Router()
+router.use(userAuthCheck)
+
+router.get('/list',listBooks);
+
+router.post('/add', [
+    check("title").notEmpty().withMessage("Enter the title of book"),
+    check("author").notEmpty().withMessage("Enter the author of book"),
+    check("price").notEmpty().withMessage("Enter the price of book"),
+    check("image").notEmpty().withMessage("Image required")
+],addBook);
+
+router.get('/:id',getBook)
+router.patch('/:id',deleteBook);
+
+router.patch('/edit/:id', [
+    check("title").optional().notEmpty().withMessage("Title name required"),
+    check("author").optional().notEmpty().withMessage("author name required"),
+    check("price").optional().notEmpty().withMessage("price required"),
+    check("image").optional().notEmpty().withMessage("image required")
+],editBook);
+
+export default router;
