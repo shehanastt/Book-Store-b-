@@ -9,6 +9,7 @@ export const viewProfile = async (req,res,next)=> {
         const { user_id } = req.userData;
 
         const myProfile = await User.findOne({_id: user_id})
+        .select("name email role");
 
         if(!myProfile){
             return next(new HttpError('user not found',404));

@@ -6,26 +6,31 @@ import authRoute from "./routes/authRoute.js"
 import bookRoute from "./routes/bookRoute.js"
 import userRoute from './routes/userRoute.js';
 
+
 // configuration
 dotenv.config()
 const app = express();
 const PORT = process.env.PORT || 8000;
+connectDB()
+app.use('/uploads' ,express.static('uploads'))
 
 // middleware
 app.use(cors());
-app.use(express.json());
 
 // routes
 app.use('/auth',authRoute);
 app.use('/user',userRoute);
 app.use('/books',bookRoute);
 
+app.use(express.json());
 // database connect
-connectDB()
+
+
 
 // GLOBAL ERROR HANDLER
 app.use((error,req, res,next) => {
-    res.status(error.code || 500).json({
+    const statusCode = typeof error.code === 'number' ? error.code : 500;
+    res.status(statusCode).json({
         message: error.message || "An unknown error occurred",
     });
 });

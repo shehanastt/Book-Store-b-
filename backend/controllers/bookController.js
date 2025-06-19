@@ -39,32 +39,41 @@ export const listBooks = async(req,res,next) => {
 export const addBook = async (req,res,next) => {
     try{
         const errors = validationResult(req)
+        console.log(req.file)
+
+        const imagePath = req.file.path 
+
         if(!errors.isEmpty()){
             return next(new HttpError("Invalid inputs,please check again",422))
         } else {
 
-            const {title, price, author, image} = req.body;
+            const {title, price, author} = req.body;
             const {user_id, user_role} = req.userData
     
             if( user_role !== "seller"){
                 return next(new HttpError('You are not authorized!'));
             } else {
-                const addedBook = await new Book({
-                    title, 
-                    price, 
-                    author, 
-                    image, 
-                    seller: user_id
-                }).save()
-    
-                if(!addedBook){
-                    return next(new HttpError('no books added',))
-                } else{
-                    res.status(201).json({
-                        status: true,
-                        message: "Book Added",
-                        data: addedBook
-                    });
+
+                if (!imagePath) {
+                    return next(new HttpError("Image is required", 422));
+                } else {
+                    const addedBook = await new Book({
+                        title, 
+                        price, 
+                        author, 
+                        image: imagePath, 
+                        seller: user_id
+                    }).save()
+        
+                    if(!addedBook){
+                        return next(new HttpError('no books added',))
+                    } else{
+                        res.status(201).json({
+                            status: true,
+                            message: "Book Added",
+                            data: ""
+                        });
+                    }
                 }
             }
         }
@@ -83,9 +92,19 @@ export const getBook = async (req, res, next)=> {
         let viewBook
 
         if(user_role === "seller") {
-            viewBook = await Book.findOne({_id: id, seller: user_id, is_deleted: false});
+            viewBook = await Book.findOne({_id: id, seller: user_id, is_deleted: false})
+            .select("title image author price stock seller")
+            .populate({
+                path: "seller",
+                select: "name"
+            });
         } else {
-            viewBook = await Book.findOne({_id: id, is_deleted: false});
+            viewBook = await Book.findOne({_id: id, is_deleted: false})
+            .select("title image author price stock seller")
+            .populate({
+                path: "seller",
+                select: "name"
+            });
         }
 
         if(!viewBook){
@@ -132,11 +151,6 @@ export const deleteBook = async(req,res,next) => {
             }
         }
     } catch (err){
-        // console.error(err);
-        console.error("Edit Book Error:", err); 
-        // if (err.name === "CastError") {
-        //     return next(new HttpError("Invalid book ID", 400));
-        // }
         return next(new HttpError("Error deleting product"));
     }
 };
@@ -157,7 +171,7 @@ export const editBook = async(req,res,next) =>{
             if(user_role !== "seller") {
                 return next (new HttpError('only sellers can edit',403));
             } else{
-                
+
                 const {title,price,author,image,stock,} = req.body
     
                 const editedBook = await Book.findOneAndUpdate(
