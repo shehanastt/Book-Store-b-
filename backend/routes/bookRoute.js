@@ -24,11 +24,15 @@ router.post('/add', upload.single("image"),[
 router.get('/:id',getBook)
 router.patch('/:id',deleteBook);
 
-router.patch('/edit/:id', [
+router.patch('/edit/:id', upload.single("image"),[
     check("title").optional().notEmpty().withMessage("Title name required"),
     check("author").optional().notEmpty().withMessage("author name required"),
     check("price").optional().notEmpty().withMessage("price required"),
-    check("image").optional().notEmpty().withMessage("image required")
+    check("image").custom((value,{req}) => {
+        if(!req.file){
+            throw new Error("Image file is required");
+        } return true;
+    })
 ],editBook);
 
 export default router;

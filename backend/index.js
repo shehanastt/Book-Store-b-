@@ -14,6 +14,8 @@ const PORT = process.env.PORT || 8000;
 connectDB()
 app.use('/uploads' ,express.static('uploads'))
 
+app.use(express.json());
+
 // middleware
 app.use(cors());
 
@@ -22,7 +24,6 @@ app.use('/auth',authRoute);
 app.use('/user',userRoute);
 app.use('/books',bookRoute);
 
-app.use(express.json());
 // database connect
 
 

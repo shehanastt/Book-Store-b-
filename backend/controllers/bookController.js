@@ -51,7 +51,7 @@ export const addBook = async (req,res,next) => {
             const {user_id, user_role} = req.userData
     
             if( user_role !== "seller"){
-                return next(new HttpError('You are not authorized!'));
+                return next(new HttpError('You are not authorized!',401));
             } else {
 
                 if (!imagePath) {
@@ -160,6 +160,7 @@ export const deleteBook = async(req,res,next) => {
 export const editBook = async(req,res,next) =>{
     try{
         const errors = validationResult(req)
+        const imagePath = req.file.path
 
         if (!errors.isEmpty()) {
             return next(new HttpError("Invalid input , please try again"));
@@ -167,27 +168,37 @@ export const editBook = async(req,res,next) =>{
 
             const {id} = req.params
             const {user_id, user_role} = req.userData
+            const {title,price,author,image,stock,} = req.body
     
             if(user_role !== "seller") {
                 return next (new HttpError('only sellers can edit',403));
             } else{
 
-                const {title,price,author,image,stock,} = req.body
+                if(!imagePath){
+                    return next(new HttpError("Image is required",422));
+                } else{
+                    const editedBook = await Book.findOneAndUpdate(
+                        {_id: id, seller: user_id, is_deleted: false},
+                        {
+                            title,
+                            price,
+                            author,
+                            image: imagePath,
+                            stock
+                        },
+                        {new: true});
+        
+                        if(!editedBook){
+                            return next(new HttpError(' book not found ',404));
+                        } else {
+                            res.status(200).json({
+                                status: true,
+                                message: "Book updated",
+                                data: ""
+                            })
+                        }
+                }
     
-                const editedBook = await Book.findOneAndUpdate(
-                    {_id: id, seller: user_id, is_deleted: false},
-                    {title,price,author,image,stock},
-                    {new: true});
-    
-                    if(!editedBook){
-                        return next(new HttpError(' book not found ',404));
-                    } else {
-                        res.status(200).json({
-                            status: true,
-                            message: "Book updated",
-                            data: ""
-                        })
-                    }
             }
         }
     } catch (err){

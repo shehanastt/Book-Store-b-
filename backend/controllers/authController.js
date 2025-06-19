@@ -8,37 +8,43 @@ import { validationResult } from "express-validator";
 // register
 export const registerUser = async (req, res, next)=> {
     try{
-        const errors = validationResult(req)
+        const errors = validationResult(req);
+        
         if(!errors.isEmpty()){
             return next(new HttpError("Invalid inputs passed, please check and retry", 422))
         } else {
-
             const {name , email ,role ,password} = req.body
-    
-            const userExists = await User.findOne({email})
-             
-            if(userExists){
-                return next(new HttpError("User already exists",400));
-            } else {
-                const hashedPassword = await bcrypt.hash(password,12)
-    
-                const user = await new User({
-                    name,
-                    email,
-                    role,
-                    password: hashedPassword
-                }).save();
-    
-                if(!user){
-                    return next(new HttpError("Registration failed", 400));
+            const imagePath = req.file?.path;
+
+            if(!imagePath){
+                return next(new HttpError("Please upload your profile picture",422));
+            } else{
+                const userExists = await User.findOne({email})
+                 
+                if(userExists){
+                    return next(new HttpError("User already exists",400));
                 } else {
-                    res.status(201).json({
-                        status: true,
-                        message:"Registered successfully",
-                        data:""
-                    })
+                    const hashedPassword = await bcrypt.hash(password,12)
+        
+                    const user = await new User({
+                        name,
+                        email,
+                        role,
+                        password: hashedPassword,
+                        image: imagePath
+                    }).save();
+        
+                    if(!user){
+                        return next(new HttpError("Registration failed", 400));
+                    } else {
+                        res.status(201).json({
+                            status: true,
+                            message:"Registered successfully",
+                            data:""
+                        })
+                    }
+        
                 }
-    
             }
         }
     } catch (err){

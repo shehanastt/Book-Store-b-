@@ -15,6 +15,10 @@ const userSchema = new mongoose.Schema({
         enum:["buyer","seller"],
         default: "buyer"
     },
+    image:{
+        type: String,
+        required: true
+    },
     password: {
         type: String,
         required: true
